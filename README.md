@@ -1,27 +1,65 @@
-# Detection
+# DetectionLineBrowser
 
-This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 16.2.14.
+An Angular application for browser compatibility detection and error handling, with Docker support for easy deployment.
 
-## Development server
+## Features
 
-Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The application will automatically reload if you change any of the source files.
+- Detects browser type and version, including LINE browser on iOS/Android.
+- Redirects unsupported browsers to a custom error page.
+- Handles LINE browser's external browser logic to avoid infinite refresh.
+- Responsive layout and Angular Material integration.
+- Dockerfile for building and serving the app with http-server.
 
-## Code scaffolding
+## Getting Started
 
-Run `ng generate component component-name` to generate a new component. You can also use `ng generate directive|pipe|service|class|guard|interface|enum|module`.
+### Prerequisites
 
-## Build
+- Node.js (v18+)
+- Docker (optional, for container deployment)
 
-Run `ng build` to build the project. The build artifacts will be stored in the `dist/` directory.
+### Local Development
 
-## Running unit tests
+```bash
+npm install
+npm run start
+```
 
-Run `ng test` to execute the unit tests via [Karma](https://karma-runner.github.io).
+App will be available at `http://localhost:4200`.
 
-## Running end-to-end tests
+### Production Build
 
-Run `ng e2e` to execute the end-to-end tests via a platform of your choice. To use this command, you need to first add a package that implements end-to-end testing capabilities.
+```bash
+npm run build -- --configuration production
+```
 
-## Further help
+### Docker Deployment
 
-To get more help on the Angular CLI use `ng help` or go check out the [Angular CLI Overview and Command Reference](https://angular.io/cli) page.
+Build and run the Docker container:
+
+```bash
+docker build -t detection-app .
+docker run -p 8080:8080 detection-app
+```
+
+App will be available at `http://localhost:8080`.
+
+## Browser Compatibility
+
+- Chrome
+- Firefox
+- Safari
+- Edge
+- Samsung Internet
+- LINE (special handling for mobile)
+
+Unsupported browsers or outdated versions will be redirected to `/browser-error`.
+
+## Project Structure
+
+- `src/app/service/browser-compatibility.module.ts`: Main compatibility logic.
+- `src/app/browser-error.component.ts`: Error page for unsupported browsers.
+- `Dockerfile`: Multi-stage build and runtime for deployment.
+
+## License
+
+MIT
