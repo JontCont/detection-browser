@@ -1,7 +1,16 @@
-import { inject, Injectable, InjectionToken, ModuleWithProviders, NgModule } from '@angular/core';
+import {
+  inject,
+  Injectable,
+  InjectionToken,
+  ModuleWithProviders,
+  NgModule,
+} from '@angular/core';
 import { environment } from '../../environments/environment';
+import { timeout } from 'rxjs';
 
-const BROWSER_COMPATIBILITY_CONFIG = new InjectionToken('browserCompatibilityConfig');
+const BROWSER_COMPATIBILITY_CONFIG = new InjectionToken(
+  'browserCompatibilityConfig'
+);
 
 export enum SupportedBrowser {
   CHROME = 'chrome',
@@ -51,17 +60,20 @@ export class WindowRef {
 @Injectable()
 export class BrowserCompatibilityService {
   private config: BrowserCompatibilityConfig =
-    (inject(BROWSER_COMPATIBILITY_CONFIG) as BrowserCompatibilityConfig) || environment.browserCompatibility;
+    (inject(BROWSER_COMPATIBILITY_CONFIG) as BrowserCompatibilityConfig) ||
+    environment.browserCompatibility;
 
-  constructor(
-    private windowRef: WindowRef,
-  ) {
+  constructor(private windowRef: WindowRef) {
     this.checkBrowserCompatibility();
   }
 
   private checkBrowserCompatibility(): void {
     // 若已經有 openExternalBrowser 參數，直接 return，避免重複執行
-    if (new URL(this.windowRef.nativeWindow.location.href).searchParams.has('openExternalBrowser')) {
+    if (
+      new URL(this.windowRef.nativeWindow.location.href).searchParams.has(
+        'openExternalBrowser'
+      )
+    ) {
       return;
     }
     if (!this.config.enabled) {
@@ -70,14 +82,14 @@ export class BrowserCompatibilityService {
 
     const browserInfo = this.getBrowserCompatibilityInfo();
     // 僅於 LINE 且手機平台嘗試跳轉外部瀏覽器 (檢查當前網址有沒有 openExternalBrowser 參數)
-    if (
-      browserInfo.name === SupportedBrowser.LINE &&
-      window.location.href.search('openExternalBrowser') < 0
-    ) {
+    if (browserInfo.name === SupportedBrowser.LINE) {
       const url = this.windowRef.nativeWindow.location.href;
       const targetUrl = new URL(url, window.location.origin);
       targetUrl.searchParams.set('openExternalBrowser', '1');
       this.windowRef.nativeWindow.location.replace(targetUrl.toString());
+      setTimeout(() => {
+        this.showIncompatibleBrowserError(browserInfo);
+      }, 3000);
       return;
     }
 
@@ -101,7 +113,10 @@ export class BrowserCompatibilityService {
     const minimumVersion = this.getMinimumVersion(browserInfo.name);
 
     // 檢查版本相容性
-    const isSupported = minimumVersion != null ? this.isVersionSupported(browserInfo.version, minimumVersion) : false;
+    const isSupported =
+      minimumVersion != null
+        ? this.isVersionSupported(browserInfo.version, minimumVersion)
+        : false;
 
     return {
       name: browserInfo.name,
@@ -113,11 +128,16 @@ export class BrowserCompatibilityService {
     };
   }
 
-  private parseUserAgent(userAgent: string): { name: BrowserType; version: string; platform: Platform } {
+  private parseUserAgent(userAgent: string): {
+    name: BrowserType;
+    version: string;
+    platform: Platform;
+  } {
     // 優先使用 Client Hints (sec-ch-ua) 進行檢測
     const clientHintsBrowser = this.detectBrowserFromClientHints();
     if (clientHintsBrowser) {
-      const platform = this.detectPlatformFromClientHints() || this.detectPlatform(userAgent);
+      const platform =
+        this.detectPlatformFromClientHints() || this.detectPlatform(userAgent);
       return {
         name: clientHintsBrowser.name,
         version: clientHintsBrowser.version,
@@ -171,7 +191,8 @@ export class BrowserCompatibilityService {
         const platform = navigator.userAgentData.platform.toLowerCase();
         // 檢查桌面平台
         if (platform.includes('windows')) return Platform.DESKTOP;
-        if (platform.includes('macos') || platform.includes('mac')) return Platform.DESKTOP;
+        if (platform.includes('macos') || platform.includes('mac'))
+          return Platform.DESKTOP;
         if (platform.includes('linux')) return Platform.DESKTOP;
 
         // 檢查行動平台
@@ -180,8 +201,13 @@ export class BrowserCompatibilityService {
       }
 
       // 檢查 mobile 標誌
-      if (navigator.userAgentData && typeof navigator.userAgentData.mobile === 'boolean') {
-        return navigator.userAgentData.mobile ? Platform.MOBILE : Platform.DESKTOP;
+      if (
+        navigator.userAgentData &&
+        typeof navigator.userAgentData.mobile === 'boolean'
+      ) {
+        return navigator.userAgentData.mobile
+          ? Platform.MOBILE
+          : Platform.DESKTOP;
       }
 
       return null;
@@ -195,7 +221,10 @@ export class BrowserCompatibilityService {
    * 使用 Client Hints (sec-ch-ua) 檢測瀏覽器
    * 這是更精確和隱私友好的方法，可以正確識別 Brave 等瀏覽器
    */
-  private detectBrowserFromClientHints(): { name: BrowserType; version: string } | null {
+  private detectBrowserFromClientHints(): {
+    name: BrowserType;
+    version: string;
+  } | null {
     try {
       // 檢查瀏覽器是否支援 Client Hints
       const navigator = this.windowRef.nativeWindow.navigator as any;
@@ -207,11 +236,17 @@ export class BrowserCompatibilityService {
         for (const brand of brands) {
           const brandName = brand.brand.toLowerCase();
           const version = brand.version;
-          if (brandName.includes('microsoft edge') || brandName.includes('edge')) {
+          if (
+            brandName.includes('microsoft edge') ||
+            brandName.includes('edge')
+          ) {
             return { name: SupportedBrowser.EDGE, version };
           } else if (brandName.includes('samsung')) {
             return { name: SupportedBrowser.SAMSUNG, version };
-          } else if (brandName.includes('chrome') && !brandName.includes('chromium')) {
+          } else if (
+            brandName.includes('chrome') &&
+            !brandName.includes('chromium')
+          ) {
             return { name: SupportedBrowser.CHROME, version };
           } else if (brandName.includes('firefox')) {
             return { name: SupportedBrowser.FIREFOX, version };
@@ -219,10 +254,15 @@ export class BrowserCompatibilityService {
         }
 
         // 如果找到 Chromium，檢查是否為 Chrome
-        const chromiumBrand = brands.find((b: any) => b.brand.toLowerCase().includes('chromium'));
+        const chromiumBrand = brands.find((b: any) =>
+          b.brand.toLowerCase().includes('chromium')
+        );
         if (chromiumBrand) {
           // 可能是基於 Chromium 的瀏覽器，但不在支援清單中
-          return { name: SupportedBrowser.UNKNOWN, version: chromiumBrand.version };
+          return {
+            name: SupportedBrowser.UNKNOWN,
+            version: chromiumBrand.version,
+          };
         }
       }
       return null;
@@ -232,7 +272,10 @@ export class BrowserCompatibilityService {
     }
   }
 
-  private detectBrowser(userAgent: string): { name: BrowserType; version: string } {
+  private detectBrowser(userAgent: string): {
+    name: BrowserType;
+    version: string;
+  } {
     // 只檢測支援的瀏覽器 - 其他一律視為不支援
     const supportedBrowserDetectors = [
       {
@@ -249,10 +292,12 @@ export class BrowserCompatibilityService {
 
       // Safari 檢測 (必須排除 Chrome，因為 Chrome 也包含 Safari)
       {
-        condition: () => userAgent.includes('Safari') && !userAgent.includes('Chrome'),
+        condition: () =>
+          userAgent.includes('Safari') && !userAgent.includes('Chrome'),
         browser: SupportedBrowser.SAFARI,
         versionRegex: /Version\/(\d+\.\d+)/,
-        customVersionProcessor: (match: RegExpMatchArray | null) => (match ? match[1] + '.0' : '0.0.0'),
+        customVersionProcessor: (match: RegExpMatchArray | null) =>
+          match ? match[1] + '.0' : '0.0.0',
       },
 
       // 2. Chrome 檢測 (放在最後，因為很多瀏覽器都包含 Chrome)
@@ -280,7 +325,8 @@ export class BrowserCompatibilityService {
         condition: () => userAgent.includes('Firefox'),
         browser: SupportedBrowser.FIREFOX,
         versionRegex: /Firefox\/(\d+\.\d+)/,
-        customVersionProcessor: (match: RegExpMatchArray | null) => (match ? match[1] + '.0' : '0.0.0'),
+        customVersionProcessor: (match: RegExpMatchArray | null) =>
+          match ? match[1] + '.0' : '0.0.0',
       },
 
       // Samsung Internet
@@ -288,7 +334,8 @@ export class BrowserCompatibilityService {
         condition: () => userAgent.includes('SamsungBrowser'),
         browser: SupportedBrowser.SAMSUNG,
         versionRegex: /SamsungBrowser\/(\d+\.\d+)/,
-        customVersionProcessor: (match: RegExpMatchArray | null) => (match ? match[1] + '.0' : '0.0.0'),
+        customVersionProcessor: (match: RegExpMatchArray | null) =>
+          match ? match[1] + '.0' : '0.0.0',
       },
     ];
 
@@ -327,7 +374,10 @@ export class BrowserCompatibilityService {
     }
   }
 
-  private isVersionSupported(currentVersion: string, minimumVersion: string): boolean {
+  private isVersionSupported(
+    currentVersion: string,
+    minimumVersion: string
+  ): boolean {
     if (!minimumVersion) {
       return true;
     }
@@ -370,7 +420,11 @@ export class BrowserCompatibilityService {
     });
   }
 
-  private compareVersions(current: number[], minimum: number[], operator: string): boolean {
+  private compareVersions(
+    current: number[],
+    minimum: number[],
+    operator: string
+  ): boolean {
     // 確保版本號陣列長度一致
     while (current.length < 3) current.push(0);
     while (minimum.length < 3) minimum.push(0);
@@ -394,7 +448,10 @@ export class BrowserCompatibilityService {
 
       case '~':
         if (curMajor !== minMajor || curMinor !== minMinor) {
-          return curMajor > minMajor || (curMajor === minMajor && curMinor > minMinor);
+          return (
+            curMajor > minMajor ||
+            (curMajor === minMajor && curMinor > minMinor)
+          );
         }
         return curPatch >= minPatch;
 
@@ -450,11 +507,15 @@ export class BrowserCompatibilityService {
   providers: [WindowRef, BrowserCompatibilityService],
 })
 export class MaibBrowserCompatibilityModule {
-  constructor(private browserCompatibilityService: BrowserCompatibilityService) {
+  constructor(
+    private browserCompatibilityService: BrowserCompatibilityService
+  ) {
     // 服務會在模組初始化時自動檢查瀏覽器相容性
   }
 
-  static forRoot(config?: BrowserCompatibilityConfig): ModuleWithProviders<MaibBrowserCompatibilityModule> {
+  static forRoot(
+    config?: BrowserCompatibilityConfig
+  ): ModuleWithProviders<MaibBrowserCompatibilityModule> {
     return {
       ngModule: MaibBrowserCompatibilityModule,
       providers: [
