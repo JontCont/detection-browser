@@ -60,6 +60,10 @@ export class BrowserCompatibilityService {
   }
 
   private checkBrowserCompatibility(): void {
+    // 若已經有 openExternalBrowser 參數，直接 return，避免重複執行
+    if (new URL(this.windowRef.nativeWindow.location.href).searchParams.has('openExternalBrowser')) {
+      return;
+    }
     if (!this.config.enabled) {
       return;
     }
@@ -68,13 +72,12 @@ export class BrowserCompatibilityService {
     // 僅於 LINE 且手機平台嘗試跳轉外部瀏覽器 (檢查當前網址有沒有 openExternalBrowser 參數)
     if (
       browserInfo.name === SupportedBrowser.LINE &&
-      !new URL(this.windowRef.nativeWindow.location.href).searchParams.has('openExternalBrowser')
+      window.location.href.search('openExternalBrowser') < 0
     ) {
       const url = this.windowRef.nativeWindow.location.href;
       const targetUrl = new URL(url, window.location.origin);
       targetUrl.searchParams.set('openExternalBrowser', '1');
       this.windowRef.nativeWindow.location.replace(targetUrl.toString());
-      this.showIncompatibleBrowserError(browserInfo); // 有需要求在開放
       return;
     }
 
@@ -413,11 +416,17 @@ export class BrowserCompatibilityService {
   }
 
   private showIncompatibleBrowserError(browserInfo: BrowserInfo): void {
-    this.windowRef.nativeWindow.location.href = '/browser-error';
+    const currentUrl = new URL(this.windowRef.nativeWindow.location.href);
+    const errorUrl = new URL('/browser-error', window.location.origin);
+    errorUrl.search = currentUrl.search; // 保留所有 searchParams
+    this.windowRef.nativeWindow.location.href = errorUrl.toString();
   }
 
   private showIncompatibleBrowserVersionError(browserInfo: BrowserInfo): void {
-    this.windowRef.nativeWindow.location.href = '/browser-error';
+    const currentUrl = new URL(this.windowRef.nativeWindow.location.href);
+    const errorUrl = new URL('/browser-error', window.location.origin);
+    errorUrl.search = currentUrl.search; // 保留所有 searchParams
+    this.windowRef.nativeWindow.location.href = errorUrl.toString();
   }
 
   /**
