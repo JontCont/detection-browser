@@ -3,14 +3,18 @@ import { BrowserModule } from '@angular/platform-browser';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
+import { MaibBrowserCompatibilityModule } from './service/browser-compatibility.module';
+import { BrowserErrorComponent } from './browser-error.component';
 
 @NgModule({
   declarations: [
-    AppComponent
+    AppComponent,
+    BrowserErrorComponent
   ],
   imports: [
     BrowserModule,
-    AppRoutingModule
+    AppRoutingModule,
+    MaibBrowserCompatibilityModule.forRoot()
   ],
   providers: [],
   bootstrap: [AppComponent]
