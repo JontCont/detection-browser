@@ -2,11 +2,6 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'app-browser-error',
-  template: `
-    <div style="padding:2rem;text-align:center;">
-      <h2>瀏覽器不支援或版本過舊</h2>
-      <p>請使用支援的瀏覽器或更新版本後再試。</p>
-    </div>
-  `
+  templateUrl: './browser-error.component.html'
 })
 export class BrowserErrorComponent {}
